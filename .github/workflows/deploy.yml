@@ -1,0 +1,31 @@
+name: Go App GitFlow Automation Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v3
+
+      - name: Build Target Docker Image
+        run: |
+          docker build -t go-demo-app:latest .
+
+      - name: Purge Legacy Container
+        run: |
+          docker stop go-app-instance || true
+          docker rm go-app-instance || true
+
+      - name: Deploy Updated Container
+        run: |
+          docker run -d --name go-app-instance -p 8888:8888 go-demo-app:latest
+
+      - name: Execute Automated Integration Test
+        run: |
+          sleep 3
+          curl -f http://localhost:8888/health
